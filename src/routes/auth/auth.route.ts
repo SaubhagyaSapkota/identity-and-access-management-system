@@ -1,18 +1,19 @@
 import express from "express";
-import {
-  userRegister,
-  userChangePassword,
-  userLogin,
-  userEmailVerification,
-  userLogout,
-} from "../../controller/auth.controller";
+import { authController } from "../../controller/auth.controller";
+import { registerUserValidator } from "../../validators/auth.validator";
+import { validateRequest } from "../../middleware/validation.middleware";
 
 const authRouter = express.Router();
 
-authRouter.post("/register", userRegister);
-authRouter.post("/login", userLogin);
-authRouter.post("/logout", userLogout);
-authRouter.post("/emailVerify", userEmailVerification);
-authRouter.post("/changePassword", userChangePassword);
+authRouter.get("/",authController.allUsers);
+authRouter.post(
+  "/register",
+  validateRequest(registerUserValidator),
+  authController.userRegister
+);
+authRouter.post("/login", authController.userLogin);
+authRouter.post("/logout", authController.userLogout);
+authRouter.post("/emailVerify", authController.userEmailVerification);
+authRouter.post("/changePassword", authController.userChangePassword);
 
 export default authRouter;

@@ -1,50 +1,41 @@
 import { Request, Response, NextFunction } from "express";
 import { authService } from "../service/auth.service";
+import { asyncHandler } from "../utils/async.handler";
 
+export const authController = {
+  // controller to get all user
+  allUsers: asyncHandler(
+    async (req: Request<{}, {}, {}, {}>, res: Response) => {
+      const user = await authService.allUsers(req.query);
+      res.status(200).json({ message: "All users Fetched successfully", user });
+    }
+  ),
 
-// controller to register a user
-export const userRegister = async (req: Request, res: Response) => {
-  try {
-    const user = await authService.registerUser(req.body);
-    res.status(201).json({ message: "User registered successfully", user });
-  } catch (error) {
-    console.error("Error registering user:", error);
-    res.status(400).json({ message: "Registration Failed." });
-  }
-};
+  // controller to register a user
+  userRegister: asyncHandler(
+    async (req: Request<{}, {}, {}, {}>, res: Response) => {
+      const user = await authService.registerUser(req.body);
+      res.status(201).json({ message: "User registered successfully", user });
+    }
+  ),
 
-// controller to login a user
-export const userLogin = async (
-  req: Request,
-  res: Response,
-) => {
-  try {
-  } catch (error) {}
-};
+  // controller to login a user
+  userLogin: asyncHandler(
+    async (req: Request<{}, {}, {}, {}>, res: Response) => {}
+  ),
 
-// controller to logout a user
-export const userLogout = async (
-  req: Request,
-  res: Response,
-) => {
-  try {
-  } catch (error) {}
-};
+  // controller to logout a user
+  userLogout: asyncHandler(
+    async (req: Request<{}, {}, {}, {}>, res: Response) => {}
+  ),
 
-// controller to change password
-export const userChangePassword = async (
-  req: Request,
-  res: Response,
-) => {
-  try {
-  } catch (error) {}
-};
+  // controller to change password
+  userChangePassword: asyncHandler(
+    async (req: Request<{}, {}, {}, {}>, res: Response) => {}
+  ),
 
-// controller for email verification
-export const userEmailVerification = async (
-  req: Request,
-  res: Response,
-) => {
-  try {
-  } catch (error) {}
+  // controller for email verification
+  userEmailVerification: asyncHandler(
+    async (req: Request<{}, {}, {}, {}>, res: Response) => {}
+  ),
 };

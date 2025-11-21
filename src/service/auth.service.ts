@@ -24,4 +24,10 @@ export const authService = {
 
     return { user }; //verificationToken: token
   },
+
+  //Service to Get all users
+  async allUsers(userData: any){
+    const result = await authRepository.getAllUsers(userData);
+    return result;
+  }
 };

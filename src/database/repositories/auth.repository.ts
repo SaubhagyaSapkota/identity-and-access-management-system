@@ -38,4 +38,10 @@ export const authRepository = {
     );
     return result.rows[0];
   },
+
+  // Get all users
+  async getAllUsers(userdata: any) {
+    const result = await pool.query(`SELECT id, name, email FROM users`);
+    return result.rows;
+  }
 };
