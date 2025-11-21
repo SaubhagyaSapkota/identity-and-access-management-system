@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
-import { authService } from "../service/auth.service";
+import { authService } from "../services/auth.service";
 import { asyncHandler } from "../utils/async.handler";
+import { RegisterUserInput } from "../validators/auth.validator";
 
 export const authController = {
   // controller to get all user
@@ -13,7 +14,10 @@ export const authController = {
 
   // controller to register a user
   userRegister: asyncHandler(
-    async (req: Request<{}, {}, {}, {}>, res: Response) => {
+    async (
+      req: Request<{}, {}, RegisterUserInput["body"], {}>,
+      res: Response
+    ) => {
       const user = await authService.registerUser(req.body);
       res.status(201).json({ message: "User registered successfully", user });
     }
