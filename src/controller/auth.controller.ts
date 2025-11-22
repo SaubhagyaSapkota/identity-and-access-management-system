@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { authService } from "../services/auth.service";
 import { asyncHandler } from "../utils/async.handler";
-import { RegisterUserInput } from "../validators/auth.validator";
+import { RegisterUserInput, VerifyEmailInput } from "../validators/auth.validator";
 
 export const authController = {
   // controller to get all user
@@ -40,6 +40,18 @@ export const authController = {
 
   // controller for email verification
   userEmailVerification: asyncHandler(
-    async (req: Request<{}, {}, {}, {}>, res: Response) => {}
+    async (req: Request<{}, {}, VerifyEmailInput['body'], {}>, res: Response) => {
+      const {email, token} = req.body;
+
+      if (!token) {
+        throw new Error("Verification Token is required");
+      }
+
+      const result = await authService.verifyEmail(token, email);
+
+      res
+        .status(200)
+        .json({ message: "Email verified successfully", data: result });
+    }
   ),
 };

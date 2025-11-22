@@ -1,7 +1,7 @@
 import { authRepository } from "../database/repositories/auth.repository";
-import { randomBytes } from "node:crypto";
 import bcrypt from "bcrypt";
 import { sendEmail } from "../middleware/sendEmail.middleware";
+import { jwtTokenService } from "../utils/jwtToken.utils";
 
 export const authService = {
   // service to register a user
@@ -19,9 +19,10 @@ export const authService = {
       password: hashedPassword,
     });
 
-    const token = randomBytes(32).toString("hex");
-
-    await authRepository.saveVerificationToken(user.id, token);
+    const token = await jwtTokenService.generateEmailVerificationToken(
+      user.id,
+      email
+    );
 
     const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
@@ -45,8 +46,38 @@ export const authService = {
   },
 
   //Service to Get all users
-  async allUsers(userData: any){
+  async allUsers(userData: any) {
     const result = await authRepository.getAllUsers(userData);
     return result;
-  }
+  },
+
+  async verifyEmail(token: string, email: string) {
+    const user = await authRepository.findUserByEmail(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.is_email_verified) {
+      return { message: "Email already verified" };
+    }
+
+    await jwtTokenService.verifyEmailVerificationToken(token);
+
+    await authRepository.verifyUserEmail(user.id);
+
+    await sendEmail(
+      email,
+      "Email Verified Successfully",
+      `
+      <h2>Hello ${user.name},</h2>
+      <p>Your email has been successfully verified.</p>
+      <p>You can now log in.</p>
+    `
+    );
+
+    return {
+      success: true,
+      message: "Email verified successfully. You can now log in.",
+    };
+  },
 };
