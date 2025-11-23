@@ -25,7 +25,9 @@ export const authController = {
 
   // controller to login a user
   userLogin: asyncHandler(
-    async (req: Request<{}, {}, {}, {}>, res: Response) => {}
+    async (req: Request<{}, {}, {}, {}>, res: Response) => {
+      console.log("login", req.body)
+    }
   ),
 
   // controller to logout a user
