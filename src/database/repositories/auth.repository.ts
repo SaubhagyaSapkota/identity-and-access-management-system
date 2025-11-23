@@ -1,3 +1,4 @@
+import { is } from "zod/v4/locales";
 import { pool } from "../connections/postgres.connection";
 
 export const authRepository = {
@@ -6,16 +7,18 @@ export const authRepository = {
     name,
     email,
     password,
+    is_email_verified,
   }: {
     name: string;
     email: string;
     password: string;
+    is_email_verified?: boolean;
   }) {
     const result = await pool.query(
-      `INSERT INTO users (name, email, password)
-       VALUES ($1, $2, $3)
+      `INSERT INTO users (name, email, password, is_email_verified)
+       VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [name, email, password]
+      [name, email, password, is_email_verified || false]
     );
     return result.rows[0];
   },
@@ -40,5 +43,22 @@ export const authRepository = {
       "UPDATE users SET is_email_verified = TRUE WHERE id = $1",
       [id]
     );
+  },
+
+  // Find a user by id
+  async findByuserID(userId: string) {
+    const result = await pool.query(`SELECT * FROM users WHERE id = $1`, [
+      userId,
+    ]);
+    return result.rows[0] || null;
+  },
+
+  // Update user password by user id
+  async updateUserPassword(userId: string, hashedPassword: string) {
+    const result = await pool.query(
+      `UPDATE users SET password = $1 WHERE id = $2 RETURNING id, email`,
+      [hashedPassword, userId]
+    );
+    return result.rows[0] || null;
   },
 };

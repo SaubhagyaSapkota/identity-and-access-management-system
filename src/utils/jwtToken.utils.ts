@@ -1,6 +1,5 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
-import { de } from "zod/v4/locales";
 
 dotenv.config();
 
@@ -17,16 +16,28 @@ export const jwtTokenService = {
     return token;
   },
 
-    async verifyEmailVerificationToken(token: string): Promise<{ userId: string; email: string }> {
-        try {
-            const decoded = jwt.verify(
-                token,
-                process.env.EMAIL_JWT_TOKEN_SECRET as string
-            ) as { userId: string; email: string };
+  async verifyEmailVerificationToken(
+    token: string
+  ): Promise<{ userId: string; email: string }> {
+    try {
+      const decoded = jwt.verify(
+        token,
+        process.env.EMAIL_JWT_TOKEN_SECRET as string
+      ) as { userId: string; email: string };
 
-            return decoded;
-        } catch (error) {
-            throw new Error("Invalid or expired verification token");
-        }
+      return decoded;
+    } catch (error) {
+      throw new Error("Invalid or expired verification token");
     }
+  },
+
+  async signAccessToken(userId: number) {
+    return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: "15m" });
+  },
+
+  async signRefreshToken(userId: number) {
+    return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET!, {
+      expiresIn: "7d",
+    });
+  },
 };
