@@ -1,11 +1,14 @@
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import express from "express";
-import { JwtPayload } from "jsonwebtoken";
-import { UserPayload } from "./userPayload";
 
 declare global {
   namespace Express {
-    interface Request {
-      user?: UserPayload;
+    export interface Request {
+      user?: {
+        userId: string;
+        email: string;
+        refreshToken?: string;
+      };
     }
   }
 }
