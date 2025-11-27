@@ -9,14 +9,6 @@ import {
 } from "../validators/auth.validator";
 
 export const authController = {
-  // controller to get all user
-  allUsers: asyncHandler(
-    async (req: Request<{}, {}, {}, {}>, res: Response) => {
-      const user = await authService.allUsers(req.query);
-      res.status(200).json({ message: "All users Fetched successfully", user });
-    }
-  ),
-
   // controller to register a user
   userRegister: asyncHandler(
     async (
@@ -39,12 +31,32 @@ export const authController = {
 
   // controller to logout a user
   userLogout: asyncHandler(async (req: Request, res: Response) => {
-    const refreshToken = req.user?.refreshToken;
+    const refreshToken = req.user?.tokenId;
 
     await authService.logoutUser(refreshToken);
     res.status(200).json({ message: "User logged out successfully" });
   }),
 
+  // controller for email verification
+  userEmailVerification: asyncHandler(
+    async (
+      req: Request<{}, {}, VerifyEmailInput["body"], {}>,
+      res: Response
+    ) => {
+      const { email, token } = req.body;
+
+      if (!token) {
+        throw new Error("Verification Token is required");
+      }
+
+      const result = await authService.verifyEmail(token, email);
+
+      res
+        .status(200)
+        .json({ message: "Email verified successfully", data: result });
+    }
+  ),
+  
   // controller to change password
   userChangePassword: asyncHandler(
     async (
@@ -65,26 +77,6 @@ export const authController = {
       res
         .status(200)
         .json({ message: "Password changed successfully", result });
-    }
-  ),
-
-  // controller for email verification
-  userEmailVerification: asyncHandler(
-    async (
-      req: Request<{}, {}, VerifyEmailInput["body"], {}>,
-      res: Response
-    ) => {
-      const { email, token } = req.body;
-
-      if (!token) {
-        throw new Error("Verification Token is required");
-      }
-
-      const result = await authService.verifyEmail(token, email);
-
-      res
-        .status(200)
-        .json({ message: "Email verified successfully", data: result });
     }
   ),
 };

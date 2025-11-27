@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { de } from "zod/v4/locales";
 
 export const extractRefreshToken = (
   req: Request,
@@ -29,7 +30,7 @@ export const extractRefreshToken = (
     req.user = {
       userId: decodedToken.userId,
       email: decodedToken.email,
-      refreshToken,
+      tokenId: decodedToken.tokenId,
     };
     next();
   } catch (error) {

@@ -24,7 +24,7 @@ export const authenticateUser = (
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
-      refreshToken: decoded.refreshToken,
+      tokenId: decoded.tokenId,
     };
 
     next();

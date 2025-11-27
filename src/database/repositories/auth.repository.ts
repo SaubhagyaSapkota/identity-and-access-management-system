@@ -1,4 +1,3 @@
-import { is } from "zod/v4/locales";
 import { pool } from "../connections/postgres.connection";
 
 export const authRepository = {
@@ -29,12 +28,6 @@ export const authRepository = {
       email,
     ]);
     return result.rows[0] || null;
-  },
-
-  // Get all users
-  async getAllUsers(userdata: any) {
-    const result = await pool.query(`SELECT id, name, email FROM users`);
-    return result.rows;
   },
 
   // Update user email verification status

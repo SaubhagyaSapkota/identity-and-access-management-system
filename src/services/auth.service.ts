@@ -3,8 +3,6 @@ import bcrypt from "bcrypt";
 import { sendEmail } from "../middleware/sendEmail.middleware";
 import { jwtTokenService } from "../utils/jwtToken.utils";
 import { tokenRepository } from "../database/repositories/token.repository";
-import jwt from "jsonwebtoken";
-
 
 export const authService = {
   // service to register a user
@@ -49,10 +47,35 @@ export const authService = {
     };
   },
 
-  //Service to Get all users
-  async allUsers(userData: any) {
-    const result = await authRepository.getAllUsers(userData);
-    return result;
+  async loginUser(email: string, password: string) {
+    const user = await authRepository.findUserByEmail(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (!user.is_email_verified) {
+      throw new Error("Please verify your email before logging in");
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new Error("Invalid password");
+    }
+
+    const accessToken = await jwtTokenService.signAccessToken(user.id);
+    const refreshToken = await jwtTokenService.signRefreshToken(user.id);
+
+    await tokenRepository.saveRefreshToken(
+      refreshToken,
+      user.id,
+      new Date(Date.now() + 7 * 86400000)
+    );
+
+    return { accessToken, refreshToken };
+  },
+
+  async logoutUser(refreshToken: any) {
+    await tokenRepository.deleteRefreshToken(refreshToken);
   },
 
   async verifyEmail(token: string, email: string) {
@@ -84,51 +107,20 @@ export const authService = {
       message: "Email verified successfully. You can now log in.",
     };
   },
-
-  async loginUser(email: string, password: string) {
-    const user = await authRepository.findUserByEmail(email);
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    if (!user.is_email_verified) {
-      throw new Error("Please verify your email before logging in");
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      throw new Error("Invalid password");
-    }
-
-    const accessToken = await jwtTokenService.signAccessToken(user.id);
-    const refreshToken = await jwtTokenService.signRefreshToken(user.id);
-
-    await tokenRepository.saveRefreshToken(
-      refreshToken,
-      user.id,
-      new Date(Date.now() + 7 * 86400000)
-    );
-
-    return { accessToken, refreshToken, };
-  },
-
-  async logoutUser(refreshToken: any) {
-    
-    await tokenRepository.deleteRefreshToken(refreshToken);
-  },
-
-  async changePassword(userId: string, oldPassword: string, newPassword: string) {
-    
+  
+  async changePassword(
+    userId: string,
+    oldPassword: string,
+    newPassword: string
+  ) {
     const user = await authRepository.findByuserID(userId);
-    if(!user){
+    if (!user) {
       throw new Error("user not found");
     }
 
     const isOldPassword = await bcrypt.compare(oldPassword, user.password);
     if (!isOldPassword) {
-      throw new Error(
-        "Old password is incorrect"
-      );
+      throw new Error("Old password is incorrect");
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
@@ -136,6 +128,5 @@ export const authService = {
     await authRepository.updateUserPassword(userId, hashedPassword);
 
     return { success: true, message: "Password changed successfully" };
-
   },
 };

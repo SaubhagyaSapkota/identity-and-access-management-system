@@ -13,13 +13,6 @@ import { authenticateUser } from "../../middleware/authUser.middleware";
 const authRouter = express.Router();
 
 /**
- * @route   GET /api/iam/auth
- * @desc    get all users
- * @access  Admin only
- */
-authRouter.get("/", authController.allUsers);
-
-/**
  * @route   POST /api/v1/auth/register
  * @desc    Submit a register request
  * @access  Public (for registration)
