@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import jwt from "jsonwebtoken";
 
 export const extractRefreshToken = (
   req: Request,
@@ -19,7 +20,19 @@ export const extractRefreshToken = (
       .json({ message: "Invalid Authorization header format" });
   }
 
-  (req as any).refreshToken = refreshToken;
+  try {
+    const decodedToken = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    ) as jwt.JwtPayload;
 
-  next();
+    req.user = {
+      userId: decodedToken.userId,
+      email: decodedToken.email,
+      refreshToken,
+    };
+    next();
+  } catch (error) {
+    return res.status(403).json({ message: "Invalid Refresh token" });
+  }
 };

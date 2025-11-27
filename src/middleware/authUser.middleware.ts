@@ -19,8 +19,14 @@ export const authenticateUser = (
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!);
-    (req as any).user = decoded;
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload;
+
+    req.user = {
+      userId: decoded.userId,
+      email: decoded.email,
+      refreshToken: decoded.refreshToken,
+    };
+
     next();
   } catch (error) {
     return res.status(403).json({ message: "Invalid or expired access token" });

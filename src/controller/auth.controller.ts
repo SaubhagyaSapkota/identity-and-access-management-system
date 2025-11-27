@@ -39,7 +39,7 @@ export const authController = {
 
   // controller to logout a user
   userLogout: asyncHandler(async (req: Request, res: Response) => {
-    const refreshToken = (req as any).refreshToken;
+    const refreshToken = req.user?.refreshToken;
 
     await authService.logoutUser(refreshToken);
     res.status(200).json({ message: "User logged out successfully" });
@@ -53,7 +53,7 @@ export const authController = {
     ) => {
       const { oldPassword, newPassword } = req.body;
 
-      const userId = (req as any).user.userId;
+      const userId = req.user?.userId;
       if (!userId) throw new Error("User not logged in");
 
       const result = await authService.changePassword(

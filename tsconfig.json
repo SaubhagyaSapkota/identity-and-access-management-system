@@ -4,12 +4,16 @@
     "module": "CommonJS",
     "rootDir": "./src",
     "outDir": "./dist",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "sourceMap": true
+    "sourceMap": true,
+    "paths": {
+      "*": ["./src/*"]
+    }
   },
-  "include": ["src"],
+  "include": ["src", "src/types/**/*.d.ts"],
   "exclude": ["node_modules", "**/*.spec.ts", "dist", "tests"]
 }

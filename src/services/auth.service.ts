@@ -109,16 +109,11 @@ export const authService = {
       new Date(Date.now() + 7 * 86400000)
     );
 
-    return { accessToken, refreshToken, user };
+    return { accessToken, refreshToken, };
   },
 
-  async logoutUser(refreshToken: string) {
-    try {
-      jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!);
-    } catch (error) {
-      throw new Error("Invalid or expired refresh token");
-    }
-
+  async logoutUser(refreshToken: any) {
+    
     await tokenRepository.deleteRefreshToken(refreshToken);
   },
 
