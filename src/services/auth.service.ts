@@ -96,7 +96,7 @@ export const authService = {
 
     await sendEmail(
       email,
-      "Email to reset password",
+      "Reset your password",
       `
         <h2>Hello ${user.name},</h2>
         <p>Click the link below to reset your Password:</p>
@@ -104,6 +104,48 @@ export const authService = {
           Verify Email
         </a>
         <p>If you didn’t request this, ignore this message.</p>
+      `
+    );
+
+    return {
+      success: true,
+      message: "Your Password has been reset.",
+    };
+  },
+
+  async resetPassword(
+    email: string,
+    newPassword: string,
+    verificationToken: string
+  ) {
+    const user = await authRepository.findUserByEmail(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const isOldPassword = await bcrypt.compare(newPassword, user.password);
+    if (isOldPassword) {
+      throw new Error("New password must be different from the old password");
+    }
+
+    const isValidToken = await jwtTokenService.verifyPasswordResetToken(
+      verificationToken
+    );
+    if (!isValidToken) {
+      throw new Error("Invalid or expired verification token");
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedPassword;
+    await authRepository.updateUserPassword(user.id, hashedPassword);
+
+    await sendEmail(
+      email,
+      "Email to reset password",
+      `
+        <h2>Hello ${user.name},</h2>
+        <p>Your password has been reset successfully.</p>
+        <p>You can now log in.</p>
       `
     );
 
@@ -143,7 +185,7 @@ export const authService = {
     };
   },
 
-  MIN_RESEND_DELAY : 2 * 60 * 1000, // 2 minutes
+  MIN_RESEND_DELAY: 2 * 60 * 1000, // 2 minutes
 
   async resendVerificationEmail(email: string) {
     const user = await authRepository.findUserByEmail(email);
@@ -156,7 +198,7 @@ export const authService = {
     }
 
     const now = Date.now();
-    const lastSent = user.lastVerificationEmailSentAt?.getTime() || 0;
+    const lastSent = user.last_verification_email_sent_at?.getTime() || 0;
 
     if (now - lastSent < this.MIN_RESEND_DELAY) {
       const delayRemaining = Math.ceil(
@@ -174,8 +216,6 @@ export const authService = {
       email
     );
 
-    await authRepository.updateLastVerificationEmailSentAt(user.id);
-
     const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
     await sendEmail(
@@ -191,13 +231,11 @@ export const authService = {
       `
     );
 
-    // Update timestamp
-    user.lastVerificationEmailSentAt = new Date();
-    await user.save();
+    await authRepository.updateLastVerificationEmailSentAt(user.id);
 
     return {
       success: true,
-      message: "User registered. Verification email sent.",
+      message: "Resent Verification email.",
     };
   },
 

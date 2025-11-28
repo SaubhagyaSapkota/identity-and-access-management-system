@@ -5,6 +5,7 @@ import {
   forgetPasswordSchema,
   registerUserValidator,
   resendEmailVerificationSchema,
+  resetPasswordSchema,
   userLoginSchema,
   verifyEmailSchema,
 } from "../../validators/auth.validator";
@@ -55,6 +56,17 @@ authRouter.post(
 );
 
 /**
+ * @route   POST /api/iam/auth/reset-password
+ * @desc    Submit a reset password request
+ * @access  User
+ */
+authRouter.post(
+  "/reset-Password",
+  validateRequest(resetPasswordSchema),
+  authController.resetPassword
+);
+
+/**
  * @route   POST /api/v1/auth/verify-email
  * @desc    Submit a email verify request
  * @access  User
@@ -69,10 +81,10 @@ authRouter.post(
  * @desc    Re-Submit a email verify request
  * @access  User
  */ authRouter.post(
-   "/resend-verification",
-   validateRequest(resendEmailVerificationSchema),
-   authController.resendVerificationEmail
- );
+  "/resend-verification",
+  validateRequest(resendEmailVerificationSchema),
+  authController.resendVerificationEmail
+);
 
 /**
  * @route   POST /api/iam/auth/change-password

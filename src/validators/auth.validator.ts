@@ -76,11 +76,38 @@ export const forgetPasswordSchema = z.object({
   }),
 });
 
+export const resetPasswordSchema = z.object({
+  body: z
+    .object({
+      email: z
+        .string("Email is required")
+        .trim()
+        .email("Please enter a valid email address")
+        .max(50, "Email should not exceed 50 characters")
+        .toLowerCase(),
+      newPassword: z
+        .string()
+        .min(6, "Password must be at least 6 characters long"),
+      confirmPassword: z.string("Confirm password is required").trim(),
+      verificationToken: z.string("Verification token is required").trim(),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: "Passwords must match",
+      path: ["confirmPassword"],
+    })
+    .transform((data) => ({
+      email: data.email,
+      newPassword: data.newPassword,
+      verificationToken: data.verificationToken,
+    })),
+});
+
 export type RegisterUserInput = z.infer<typeof registerUserValidator>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type UserLoginInput = z.infer<typeof userLoginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type ForgetPasswordInput = z.infer<typeof forgetPasswordSchema>;
+export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;
 export type ResendEmailVerificationSchema = z.infer<
   typeof resendEmailVerificationSchema
 >;

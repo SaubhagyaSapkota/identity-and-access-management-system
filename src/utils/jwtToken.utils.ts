@@ -49,4 +49,19 @@ export const jwtTokenService = {
     );
     return token;
   },
+
+  async verifyPasswordResetToken(
+    token: string
+  ): Promise<{ userId: string; email: string }> {
+    try {
+      const decoded = jwt.verify(
+        token,
+        process.env.PASSWORD_JWT_SECRET as string
+      ) as { userId: string; email: string };
+
+      return decoded;
+    } catch (error) {
+      throw new Error("Invalid or expired verification token");
+    }
+  },
 };
