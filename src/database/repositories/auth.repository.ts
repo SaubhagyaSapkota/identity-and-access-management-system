@@ -33,7 +33,7 @@ export const authRepository = {
   // Update user email verification status
   async verifyUserEmail(id: string) {
     await pool.query(
-      "UPDATE users SET is_email_verified = TRUE WHERE id = $1",
+      "UPDATE users SET is_email_verified = TRUE, email_verified_at = NOW() WHERE id = $1",
       [id]
     );
   },
@@ -53,5 +53,13 @@ export const authRepository = {
       [hashedPassword, userId]
     );
     return result.rows[0] || null;
+  },
+
+  // Update last verification email sent timestamp
+  async updateLastVerificationEmailSentAt(id: string) {
+    await pool.query(
+      "UPDATE users SET last_verification_email_sent_at = NOW() WHERE id = $1",
+      [id]
+    );
   },
 };

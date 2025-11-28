@@ -25,6 +25,17 @@ export const verifyEmailSchema = z.object({
   }),
 });
 
+export const resendEmailVerificationSchema = z.object({
+  body: z.object({
+    email: z
+      .string("Email is required")
+      .trim()
+      .email("Please enter a valid email address")
+      .max(50, "Email should not exceed 50 characters")
+      .toLowerCase(),
+  }),
+});
+
 export const userLoginSchema = z.object({
   body: z.object({
     email: z
@@ -52,7 +63,7 @@ export const changePasswordSchema = z.object({
       message: "Passwords must match",
       path: ["confirmPassword"],
     }),
-}); 
+});
 
 export const forgetPasswordSchema = z.object({
   body: z.object({
@@ -70,3 +81,6 @@ export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type UserLoginInput = z.infer<typeof userLoginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
 export type ForgetPasswordInput = z.infer<typeof forgetPasswordSchema>;
+export type ResendEmailVerificationSchema = z.infer<
+  typeof resendEmailVerificationSchema
+>;

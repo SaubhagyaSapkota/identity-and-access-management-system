@@ -4,6 +4,7 @@ import {
   changePasswordSchema,
   forgetPasswordSchema,
   registerUserValidator,
+  resendEmailVerificationSchema,
   userLoginSchema,
   verifyEmailSchema,
 } from "../../validators/auth.validator";
@@ -43,7 +44,7 @@ authRouter.post(
 authRouter.post("/logout", extractRefreshToken, authController.userLogout);
 
 /**
- * @route   POST /api/iam/auth/forgetPassword
+ * @route   POST /api/iam/auth/forget-password
  * @desc    Submit a forget password request
  * @access  User
  */
@@ -54,22 +55,32 @@ authRouter.post(
 );
 
 /**
- * @route   POST /api/v1/auth/emailVerify
+ * @route   POST /api/v1/auth/verify-email
  * @desc    Submit a email verify request
  * @access  User
  */ authRouter.post(
-  "/emailVerify",
+  "/verify-email",
   validateRequest(verifyEmailSchema),
   authController.userEmailVerification
 );
 
 /**
- * @route   POST /api/iam/auth/changePassword
+ * @route   POST /api/v1/auth/resend-verification
+ * @desc    Re-Submit a email verify request
+ * @access  User
+ */ authRouter.post(
+   "/resend-verification",
+   validateRequest(resendEmailVerificationSchema),
+   authController.resendVerificationEmail
+ );
+
+/**
+ * @route   POST /api/iam/auth/change-password
  * @desc    Submit a change password request
  * @access  User
  */
 authRouter.post(
-  "/changePassword",
+  "/change-password",
   authenticateUser,
   validateRequest(changePasswordSchema),
   authController.userChangePassword

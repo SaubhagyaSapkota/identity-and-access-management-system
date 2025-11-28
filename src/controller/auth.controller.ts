@@ -5,6 +5,7 @@ import {
   ChangePasswordInput,
   ForgetPasswordInput,
   RegisterUserInput,
+  ResendEmailVerificationSchema,
   UserLoginInput,
   VerifyEmailInput,
 } from "../validators/auth.validator";
@@ -46,14 +47,12 @@ export const authController = {
     ) => {
       const { email } = req.body;
 
-      const {success} = await authService.forgetPassword(email);
+      const { success } = await authService.forgetPassword(email);
 
-      res
-        .status(200)
-        .json({
-          message: "Reset password email sent. Please check your inbox.",
-          success,
-        });
+      res.status(200).json({
+        message: "Reset password email sent. Please check your inbox.",
+        success,
+      });
     }
   ),
 
@@ -70,6 +69,22 @@ export const authController = {
       }
 
       const result = await authService.verifyEmail(token, email);
+
+      res
+        .status(200)
+        .json({ message: "Email verified successfully", data: result });
+    }
+  ),
+
+  // controller for resending verification email
+  resendVerificationEmail: asyncHandler(
+    async (
+      req: Request<{}, {}, ResendEmailVerificationSchema["body"], {}>,
+      res: Response
+    ) => {
+      const { email } = req.body;
+
+      const result = await authService.resendVerificationEmail(email);
 
       res
         .status(200)

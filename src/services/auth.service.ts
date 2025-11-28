@@ -26,6 +26,9 @@ export const authService = {
       email
     );
 
+    // Update timestamp BEFORE sending email
+    await authRepository.updateLastVerificationEmailSentAt(user.id);
+
     const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
     await sendEmail(
@@ -137,6 +140,64 @@ export const authService = {
     return {
       success: true,
       message: "Email verified successfully. You can now log in.",
+    };
+  },
+
+  MIN_RESEND_DELAY : 2 * 60 * 1000, // 2 minutes
+
+  async resendVerificationEmail(email: string) {
+    const user = await authRepository.findUserByEmail(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.is_email_verified) {
+      return { message: "Email already verified" };
+    }
+
+    const now = Date.now();
+    const lastSent = user.lastVerificationEmailSentAt?.getTime() || 0;
+
+    if (now - lastSent < this.MIN_RESEND_DELAY) {
+      const delayRemaining = Math.ceil(
+        (this.MIN_RESEND_DELAY - (now - lastSent)) / 1000
+      );
+      return {
+        message: `Please wait ${delayRemaining} seconds before resending`,
+        emailSent: false,
+        delayRemaining,
+      };
+    }
+
+    const token = await jwtTokenService.generateEmailVerificationToken(
+      user.id,
+      email
+    );
+
+    await authRepository.updateLastVerificationEmailSentAt(user.id);
+
+    const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+
+    await sendEmail(
+      email,
+      "Verify your email address",
+      `
+        <h2>Hello ${user.name},</h2>
+        <p>Click the link below to verify your email:</p>
+        <a href="${verifyLink}">
+          Verify Email
+        </a>
+        <p>If you didn’t request this, ignore this message.</p>
+      `
+    );
+
+    // Update timestamp
+    user.lastVerificationEmailSentAt = new Date();
+    await user.save();
+
+    return {
+      success: true,
+      message: "User registered. Verification email sent.",
     };
   },
 
