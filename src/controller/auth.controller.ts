@@ -3,6 +3,7 @@ import { authService } from "../services/auth.service";
 import { asyncHandler } from "../utils/async.handler";
 import {
   ChangePasswordInput,
+  ForgetPasswordInput,
   RegisterUserInput,
   UserLoginInput,
   VerifyEmailInput,
@@ -37,6 +38,25 @@ export const authController = {
     res.status(200).json({ message: "User logged out successfully" });
   }),
 
+  // controller for forget password
+  forgetPassword: asyncHandler(
+    async (
+      req: Request<{}, {}, ForgetPasswordInput["body"], {}>,
+      res: Response
+    ) => {
+      const { email } = req.body;
+
+      const {success} = await authService.forgetPassword(email);
+
+      res
+        .status(200)
+        .json({
+          message: "Reset password email sent. Please check your inbox.",
+          success,
+        });
+    }
+  ),
+
   // controller for email verification
   userEmailVerification: asyncHandler(
     async (
@@ -56,7 +76,7 @@ export const authController = {
         .json({ message: "Email verified successfully", data: result });
     }
   ),
-  
+
   // controller to change password
   userChangePassword: asyncHandler(
     async (

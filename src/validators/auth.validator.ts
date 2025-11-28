@@ -54,7 +54,19 @@ export const changePasswordSchema = z.object({
     }),
 }); 
 
+export const forgetPasswordSchema = z.object({
+  body: z.object({
+    email: z
+      .string("Email is required")
+      .trim()
+      .email("Please enter a valid email address")
+      .max(50, "Email should not exceed 50 characters")
+      .toLowerCase(),
+  }),
+});
+
 export type RegisterUserInput = z.infer<typeof registerUserValidator>;
 export type VerifyEmailInput = z.infer<typeof verifyEmailSchema>;
 export type UserLoginInput = z.infer<typeof userLoginSchema>;
 export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;
+export type ForgetPasswordInput = z.infer<typeof forgetPasswordSchema>;

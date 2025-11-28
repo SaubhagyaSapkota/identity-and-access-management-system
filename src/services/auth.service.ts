@@ -78,6 +78,38 @@ export const authService = {
     await tokenRepository.deleteRefreshToken(refreshToken);
   },
 
+  async forgetPassword(email: string) {
+    const user = await authRepository.findUserByEmail(email);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const token = await jwtTokenService.generateForgetPasswordToken(
+      user.id,
+      email
+    );
+
+    const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
+
+    await sendEmail(
+      email,
+      "Email to reset password",
+      `
+        <h2>Hello ${user.name},</h2>
+        <p>Click the link below to reset your Password:</p>
+        <a href="${verifyLink}">
+          Verify Email
+        </a>
+        <p>If you didn’t request this, ignore this message.</p>
+      `
+    );
+
+    return {
+      success: true,
+      message: "Your Password has been reset.",
+    };
+  },
+
   async verifyEmail(token: string, email: string) {
     const user = await authRepository.findUserByEmail(email);
     if (!user) {
@@ -107,7 +139,7 @@ export const authService = {
       message: "Email verified successfully. You can now log in.",
     };
   },
-  
+
   async changePassword(
     userId: string,
     oldPassword: string,

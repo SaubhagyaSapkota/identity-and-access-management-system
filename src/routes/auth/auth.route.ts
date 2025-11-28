@@ -2,6 +2,7 @@ import express from "express";
 import { authController } from "../../controller/auth.controller";
 import {
   changePasswordSchema,
+  forgetPasswordSchema,
   registerUserValidator,
   userLoginSchema,
   verifyEmailSchema,
@@ -42,6 +43,17 @@ authRouter.post(
 authRouter.post("/logout", extractRefreshToken, authController.userLogout);
 
 /**
+ * @route   POST /api/iam/auth/forgetPassword
+ * @desc    Submit a forget password request
+ * @access  User
+ */
+authRouter.post(
+  "/forget-Password",
+  validateRequest(forgetPasswordSchema),
+  authController.forgetPassword
+);
+
+/**
  * @route   POST /api/v1/auth/emailVerify
  * @desc    Submit a email verify request
  * @access  User
@@ -56,6 +68,11 @@ authRouter.post("/logout", extractRefreshToken, authController.userLogout);
  * @desc    Submit a change password request
  * @access  User
  */
-authRouter.post("/changePassword",authenticateUser, validateRequest(changePasswordSchema), authController.userChangePassword);
+authRouter.post(
+  "/changePassword",
+  authenticateUser,
+  validateRequest(changePasswordSchema),
+  authController.userChangePassword
+);
 
 export default authRouter;

@@ -40,4 +40,13 @@ export const jwtTokenService = {
       expiresIn: "7d",
     });
   },
+
+  async generateForgetPasswordToken(userId: string, email: string) {
+    const token = jwt.sign(
+      { userId, email },
+      process.env.PASSWORD_JWT_SECRET as string,
+      { expiresIn: "15m" }
+    );
+    return token;
+  },
 };

@@ -4,7 +4,7 @@ import { adminController } from "../../controller/admin.controller";
 const adminRouter = express.Router();
 
 /**
- * @route   GET /api/iam/auth
+ * @route   GET /api/iam/admin
  * @desc    get all users
  * @access  Admin only
  */
