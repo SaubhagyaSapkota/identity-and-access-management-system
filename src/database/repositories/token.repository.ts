@@ -22,4 +22,18 @@ export const tokenRepository = {
     );
     return result.rows[0];
   },
+
+  async findRefreshTokenByUserId(userId: string) {
+    const { rows } = await pool.query(
+      `
+    SELECT *
+    FROM refresh_tokens
+    WHERE user_id = $1
+    LIMIT 1
+  `,
+      [userId]
+    );
+    if (rows.length === 0) return null;
+    return rows[0];
+  },
 };

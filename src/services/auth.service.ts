@@ -66,6 +66,13 @@ export const authService = {
       throw new Error("Invalid password");
     }
 
+    const existingToken = await tokenRepository.findRefreshTokenByUserId(
+      user.id
+    );
+    if (existingToken) {
+      throw new Error("User already logged in");
+    }
+
     const accessToken = await jwtTokenService.signAccessToken(user.id);
     const refreshToken = await jwtTokenService.signRefreshToken(user.id);
 
@@ -262,20 +269,30 @@ export const authService = {
     return { success: true, message: "Password changed successfully" };
   },
 
-  async refreshAccessToken(refreshToken: string) {
-
-    const tokenExists = await tokenRepository.findRefreshToken(refreshToken);
+  async refreshAccessToken(oldRefreshToken: string) {
+    const tokenExists = await tokenRepository.findRefreshToken(oldRefreshToken);
     if (!tokenExists) {
       throw new Error("Refresh token not found or invalid");
     }
-    
+
     const decoded = jwt.verify(
-      refreshToken,
+      oldRefreshToken,
       process.env.REFRESH_TOKEN_SECRET!
     ) as jwt.JwtPayload;
 
-    const newAccessToken = await jwtTokenService.signAccessToken(decoded.userId);
+    const userId = decoded.userId;
 
-    return { accessToken: newAccessToken  };
+    const newAccessToken = await jwtTokenService.signAccessToken(userId);
+    const newRefreshToken = await jwtTokenService.signRefreshToken(userId);
+
+    await tokenRepository.deleteRefreshToken(oldRefreshToken);
+
+    await tokenRepository.saveRefreshToken(
+      newRefreshToken,
+      userId,
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    );
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
   },
 };

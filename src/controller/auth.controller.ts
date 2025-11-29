@@ -52,7 +52,7 @@ export const authController = {
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
-      throw new Error("No refresh token found");
+      throw new Error("User already logged out");
     }
 
     await authService.logoutUser(refreshToken);
@@ -63,7 +63,7 @@ export const authController = {
       secure: true,
       sameSite: "strict",
     });
-    
+
     res.status(200).json({ message: "User logged out successfully" });
   }),
 
@@ -167,10 +167,18 @@ export const authController = {
 
   // controller to change password
   refreshAccessToken: asyncHandler(async (req: Request, res: Response) => {
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) throw new Error("Refresh token is missing");
+    const oldRefreshToken = req.cookies.refreshToken;
+    if (!oldRefreshToken) throw new Error("Refresh token is missing");
 
-    const { accessToken } = await authService.refreshAccessToken(refreshToken);
+    const { accessToken, refreshToken: newRefreshToken } =
+      await authService.refreshAccessToken(oldRefreshToken);
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
     res.status(200).json({
       accessToken,
