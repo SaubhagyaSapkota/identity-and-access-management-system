@@ -6,8 +6,8 @@ export const adminController = {
   // controller to get all user
   allUsers: asyncHandler(
     async (req: Request<{}, {}, {}, {}>, res: Response) => {
-      const user = await adminService.allUsers(req.query);
-      res.status(200).json({ message: "All users Fetched successfully", user });
+      const users = await adminService.allUsers(req.query);
+      res.status(200).json({ message: "All users Fetched successfully", users });
     }
   ),
 };
