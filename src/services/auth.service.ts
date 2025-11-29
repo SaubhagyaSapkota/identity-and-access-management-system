@@ -3,6 +3,7 @@ import bcrypt from "bcrypt";
 import { sendEmail } from "../middleware/sendEmail.middleware";
 import { jwtTokenService } from "../utils/jwtToken.utils";
 import { tokenRepository } from "../database/repositories/token.repository";
+import jwt from "jsonwebtoken";
 
 export const authService = {
   // service to register a user
@@ -259,5 +260,22 @@ export const authService = {
     await authRepository.updateUserPassword(userId, hashedPassword);
 
     return { success: true, message: "Password changed successfully" };
+  },
+
+  async refreshAccessToken(refreshToken: string) {
+
+    const tokenExists = await tokenRepository.findRefreshToken(refreshToken);
+    if (!tokenExists) {
+      throw new Error("Refresh token not found or invalid");
+    }
+    
+    const decoded = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    ) as jwt.JwtPayload;
+
+    const newAccessToken = await jwtTokenService.signAccessToken(decoded.userId);
+
+    return { accessToken: newAccessToken  };
   },
 };

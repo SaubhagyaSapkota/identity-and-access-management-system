@@ -12,19 +12,22 @@ export const authenticateUser = (
     return res.status(401).json({ message: "Access token missing" });
   }
 
-  const token = authHeader.split(" ")[1];
+  const accessToken = authHeader.split(" ")[1];
 
-  if (!token) {
+  if (!accessToken) {
     return res.status(401).json({ message: "Access token missing" });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as jwt.JwtPayload;
+    const decoded = jwt.verify(
+      accessToken,
+      process.env.JWT_SECRET!
+    ) as jwt.JwtPayload;
 
     req.user = {
       userId: decoded.userId,
       email: decoded.email,
-      tokenId: decoded.tokenId,
+      token: accessToken,
     };
 
     next();

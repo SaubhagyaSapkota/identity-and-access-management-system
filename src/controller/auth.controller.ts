@@ -27,16 +27,43 @@ export const authController = {
   userLogin: asyncHandler(
     async (req: Request<{}, {}, UserLoginInput["body"], {}>, res: Response) => {
       const { email, password } = req.body;
-      const user = await authService.loginUser(email, password);
-      res.status(200).json({ message: "User logged in successfully", user });
+      const { accessToken, refreshToken } = await authService.loginUser(
+        email,
+        password
+      );
+
+      // Store refresh token in HttpOnly cookie
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      });
+
+      res.status(200).json({
+        message: "User logged in successfully",
+        accessToken,
+      });
     }
   ),
 
   // controller to logout a user
   userLogout: asyncHandler(async (req: Request, res: Response) => {
-    const refreshToken = req.user?.tokenId;
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      throw new Error("No refresh token found");
+    }
 
     await authService.logoutUser(refreshToken);
+
+    // Clear cookie
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
+    
     res.status(200).json({ message: "User logged out successfully" });
   }),
 
@@ -65,7 +92,11 @@ export const authController = {
     ) => {
       const { email, newPassword, verificationToken } = req.body;
 
-      const { success } = await authService.resetPassword(email, newPassword, verificationToken);
+      const { success } = await authService.resetPassword(
+        email,
+        newPassword,
+        verificationToken
+      );
 
       res.status(200).json({
         message: "Reset password email sent. Please check your inbox.",
@@ -133,4 +164,16 @@ export const authController = {
         .json({ message: "Password changed successfully", result });
     }
   ),
+
+  // controller to change password
+  refreshAccessToken: asyncHandler(async (req: Request, res: Response) => {
+    const refreshToken = req.cookies.refreshToken;
+    if (!refreshToken) throw new Error("Refresh token is missing");
+
+    const { accessToken } = await authService.refreshAccessToken(refreshToken);
+
+    res.status(200).json({
+      accessToken,
+    });
+  }),
 };

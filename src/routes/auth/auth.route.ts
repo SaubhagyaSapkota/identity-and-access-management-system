@@ -10,7 +10,6 @@ import {
   verifyEmailSchema,
 } from "../../validators/auth.validator";
 import { validateRequest } from "../../middleware/validation.middleware";
-import { extractRefreshToken } from "../../middleware/extractToken.middleware";
 import { authenticateUser } from "../../middleware/authUser.middleware";
 
 const authRouter = express.Router();
@@ -42,7 +41,7 @@ authRouter.post(
  * @desc    Submit a logout request
  * @access  User
  */
-authRouter.post("/logout", extractRefreshToken, authController.userLogout);
+authRouter.post("/logout", authController.userLogout);
 
 /**
  * @route   POST /api/iam/auth/forget-password
@@ -97,5 +96,12 @@ authRouter.post(
   validateRequest(changePasswordSchema),
   authController.userChangePassword
 );
+
+/**
+ * @route   POST /api/iam/auth/refresh-token
+ * @desc    Generate new access token from refresh token
+ * @access  User
+ */
+authRouter.post("/refresh-token", authController.refreshAccessToken);
 
 export default authRouter;
