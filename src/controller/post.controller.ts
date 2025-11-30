@@ -4,6 +4,7 @@ import { postService } from "../services/post.service";
 import {
   CreatePostInput,
   DeletePostInput,
+  GetPostByIdInput,
   UpdatePostInput,
 } from "validators/post.validator";
 import { UploadedFile } from "middleware/file-upload.middleware";
@@ -84,8 +85,30 @@ export const postController = {
   ),
 
   // controller to create a post
-  getAllPost: asyncHandler(async (req: Request, res: Response) => {}),
+  getAllPost: asyncHandler(
+    async (req: Request<{}, {}, {}, {}>, res: Response) => {
+      const posts = await postService.allPosts();
+      res
+        .status(200)
+        .json({ message: "All posts Fetched successfully", posts });
+    }
+  ),
 
   // controller to create a post
-  getPostById: asyncHandler(async (req: Request, res: Response) => {}),
+  getPostById: asyncHandler(
+    async (
+      req: Request<GetPostByIdInput["params"], {}, {}, {}>,
+      res: Response
+    ) => {
+      const { postId } = req.params;
+      const post = await postService.getPostById(postId);
+      if (!post) {
+        throw new Error("Post not found");
+      }
+      res.status(200).json({
+        success: true,
+        data: post,
+      });
+    }
+  ),
 };

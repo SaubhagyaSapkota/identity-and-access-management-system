@@ -26,6 +26,13 @@ export const deletePostValidator = z.object({
   }),
 });
 
+export const getPostByIdValidator = z.object({
+  params: z.object({
+    postId: z.string().min(1, "Post ID is required"),
+  }),
+});
+
 export type CreatePostInput = z.infer<typeof createPostValidator>;
 export type UpdatePostInput = z.infer<typeof updatePostValidator>;
 export type DeletePostInput = z.infer<typeof deletePostValidator>;
+export type GetPostByIdInput = z.infer<typeof getPostByIdValidator>;

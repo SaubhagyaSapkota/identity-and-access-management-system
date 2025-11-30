@@ -66,10 +66,7 @@ export const postService = {
   },
 
   // service to delete a post
-  async deletePost(
-    postId: string,
-    userId: string,
-  ) {
+  async deletePost(postId: string, userId: string) {
     const existingPost = await postRepository.getPostById(postId);
     if (!existingPost) {
       throw new Error("Post not found");
@@ -81,5 +78,14 @@ export const postService = {
 
     const deletePost = await postRepository.deletePost(postId);
     return deletePost;
+  },
+
+  async allPosts() {
+    const users = await postRepository.getAllPosts();
+    return users;
+  },
+
+  async getPostById(post_id: string) {
+    return await postRepository.getPostById(post_id);
   },
 };

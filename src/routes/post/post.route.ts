@@ -6,6 +6,7 @@ import { validateRequest } from "middleware/validation.middleware";
 import {
   createPostValidator,
   deletePostValidator,
+  getPostByIdValidator,
   updatePostValidator,
 } from "validators/post.validator";
 
@@ -58,6 +59,10 @@ postRouter.get("/", postController.getAllPost);
  * @desc    View a single post
  * @access  Users
  */
-postRouter.get("/:postId", postController.getPostById);
+postRouter.get(
+  "/:postId",
+  validateRequest(getPostByIdValidator),
+  postController.getPostById
+);
 
 export default postRouter;

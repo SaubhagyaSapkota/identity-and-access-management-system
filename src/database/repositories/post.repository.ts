@@ -74,4 +74,11 @@ export const postRepository = {
 
     return result.rows[0];
   },
+
+  async getAllPosts() {
+    const result = await pool.query(
+      `SELECT * FROM posts ORDER BY created_at DESC`
+    );
+    return result.rows;
+  },
 };
