@@ -29,4 +29,49 @@ export const postRepository = {
     );
     return result.rows[0];
   },
+
+  async getPostById(postId: string) {
+    const result = await pool.query(`SELECT * FROM posts WHERE post_id = $1`, [
+      postId,
+    ]);
+    return result.rows[0];
+  },
+
+  async updatePost(
+    postId: string,
+    {
+      title,
+      issue_description,
+      solution_description,
+      postFilesUrl,
+    }: {
+      title: string;
+      issue_description: string;
+      solution_description: string;
+      postFilesUrl: string[];
+    }
+  ) {
+    const result = await pool.query(
+      `UPDATE posts
+     SET title = $1,
+         issue_description = $2,
+         solution_description = $3,
+         postfileurl = $4,
+         updated_at = NOW()
+     WHERE post_id = $5
+     RETURNING *`,
+      [title, issue_description, solution_description, postFilesUrl, postId]
+    );
+
+    return result.rows[0];
+  },
+
+  async deletePost(postId: string) {
+    const result = await pool.query(
+      `DELETE FROM posts WHERE post_id = $1 RETURNING *`,
+      [postId]
+    );
+
+    return result.rows[0];
+  },
 };

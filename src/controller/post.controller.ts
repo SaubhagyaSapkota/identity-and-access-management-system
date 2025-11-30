@@ -21,7 +21,11 @@ export const postController = {
       }
 
       const uploadedFiles = req.uploadedFiles as UploadedFile[];
-      const createdPost = await postService.createPost(req.body, user.userId, uploadedFiles);
+      const createdPost = await postService.createPost(
+        req.body,
+        user.userId,
+        uploadedFiles
+      );
 
       res.status(201).json({
         success: true,
@@ -36,7 +40,47 @@ export const postController = {
     async (
       req: Request<UpdatePostInput["params"], {}, UpdatePostInput["body"], {}>,
       res: Response
-    ) => {}
+    ) => {
+      const user = req.user;
+      if (!user) {
+        throw new Error("Unauthorized");
+      }
+      const uploadedFiles = req.uploadedFiles as UploadedFile[];
+
+      const { postId } = req.params;
+
+      const updatedPost = await postService.updatePost(
+        postId,
+        req.body,
+        user.userId,
+        uploadedFiles
+      );
+      res.status(200).json({
+        success: true,
+        message: "Post updated successfully",
+        data: updatedPost,
+      });
+    }
+  ),
+
+  // controller to create a post
+  deletePost: asyncHandler(
+    async (
+      req: Request<DeletePostInput["params"], {}, {}, {}>,
+      res: Response
+    ) => {
+      const user = req.user;
+      if (!user) {
+        throw new Error("Unauthorized");
+      }
+      const { postId } = req.params;
+      await postService.deletePost(postId, user.userId);
+
+      res.status(200).json({
+        success: true,
+        message: "Post deleted successfully",
+      });
+    }
   ),
 
   // controller to create a post
@@ -44,12 +88,4 @@ export const postController = {
 
   // controller to create a post
   getPostById: asyncHandler(async (req: Request, res: Response) => {}),
-
-  // controller to create a post
-  deletePost: asyncHandler(
-    async (
-      req: Request<{}, {}, DeletePostInput["params"], {}>,
-      res: Response
-    ) => {}
-  ),
 };
