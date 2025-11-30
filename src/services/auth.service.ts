@@ -1,9 +1,10 @@
 import { authRepository } from "../database/repositories/auth.repository";
 import bcrypt from "bcrypt";
-import { sendEmail } from "../middleware/sendEmail.middleware";
-import { jwtTokenService } from "../utils/jwtToken.utils";
+import { sendEmail } from "../shared/utils/sendGrid.email.utils";
+import { jwtTokenService } from "../shared/utils/jwtToken.utils";
 import { tokenRepository } from "../database/repositories/token.repository";
 import jwt from "jsonwebtoken";
+import { EmailManager } from "middleware/sendEmail.middleware";
 
 export const authService = {
   // service to register a user
@@ -32,23 +33,11 @@ export const authService = {
 
     const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
-    await sendEmail(
+    return await EmailManager.sendEmailVerificationEmail(
       email,
-      "Verify your email address",
-      `
-        <h2>Hello ${name},</h2>
-        <p>Click the link below to verify your email:</p>
-        <a href="${verifyLink}">
-          Verify Email
-        </a>
-        <p>If you didn’t request this, ignore this message.</p>
-      `
+      name,
+      verifyLink
     );
-
-    return {
-      success: true,
-      message: "User registered. Verification email sent.",
-    };
   },
 
   async loginUser(email: string, password: string) {
@@ -102,23 +91,11 @@ export const authService = {
 
     const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
-    await sendEmail(
+    return await EmailManager.sendPasswordResetEmail(
       email,
-      "Reset your password",
-      `
-        <h2>Hello ${user.name},</h2>
-        <p>Click the link below to reset your Password:</p>
-        <a href="${verifyLink}">
-          Verify Email
-        </a>
-        <p>If you didn’t request this, ignore this message.</p>
-      `
+      user.name,
+      verifyLink
     );
-
-    return {
-      success: true,
-      message: "Your Password has been reset.",
-    };
   },
 
   async resetPassword(
@@ -147,20 +124,11 @@ export const authService = {
     user.password = hashedPassword;
     await authRepository.updateUserPassword(user.id, hashedPassword);
 
-    await sendEmail(
+    await EmailManager.sendPasswordResetConfirmationEmail(
       email,
-      "Email to reset password",
-      `
-        <h2>Hello ${user.name},</h2>
-        <p>Your password has been reset successfully.</p>
-        <p>You can now log in.</p>
-      `
+      user.name,
+      `${process.env.CLIENT_URL}/login`
     );
-
-    return {
-      success: true,
-      message: "Your Password has been reset.",
-    };
   },
 
   async verifyEmail(token: string, email: string) {
@@ -177,20 +145,7 @@ export const authService = {
 
     await authRepository.verifyUserEmail(user.id);
 
-    await sendEmail(
-      email,
-      "Email Verified Successfully",
-      `
-      <h2>Hello ${user.name},</h2>
-      <p>Your email has been successfully verified.</p>
-      <p>You can now log in.</p>
-    `
-    );
-
-    return {
-      success: true,
-      message: "Email verified successfully. You can now log in.",
-    };
+    await EmailManager.sendEmailVerificationConfirmation(email, user.name);
   },
 
   MIN_RESEND_DELAY: 2 * 60 * 1000, // 2 minutes
@@ -226,18 +181,7 @@ export const authService = {
 
     const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
-    await sendEmail(
-      email,
-      "Verify your email address",
-      `
-        <h2>Hello ${user.name},</h2>
-        <p>Click the link below to verify your email:</p>
-        <a href="${verifyLink}">
-          Verify Email
-        </a>
-        <p>If you didn’t request this, ignore this message.</p>
-      `
-    );
+    await EmailManager.sendEmailVerificationEmail(email, user.name, verifyLink);
 
     await authRepository.updateLastVerificationEmailSentAt(user.id);
 

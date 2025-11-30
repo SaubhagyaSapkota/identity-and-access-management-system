@@ -1,4 +1,4 @@
-import { pool } from "../connections/postgres.connection";
+import { pool } from "../../../connections/postgres.connection";
 
 export const tokenRepository = {
   // New method to save refresh token

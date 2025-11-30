@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { authService } from "../services/auth.service";
-import { asyncHandler } from "../utils/async.handler";
+import { asyncHandler } from "../shared/utils/async.handler";
 import {
   ChangePasswordInput,
   ForgetPasswordInput,
@@ -92,15 +92,15 @@ export const authController = {
     ) => {
       const { email, newPassword, verificationToken } = req.body;
 
-      const { success } = await authService.resetPassword(
+      const result = await authService.resetPassword(
         email,
         newPassword,
         verificationToken
       );
 
       res.status(200).json({
-        message: "Reset password email sent. Please check your inbox.",
-        success,
+        message: "Password reset successfully",
+        result,
       });
     }
   ),
