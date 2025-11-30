@@ -1,4 +1,4 @@
-import { adminRepository } from "../infrastructure/database/repositories/admin.repository";
+import { adminRepository } from "../database/repositories/admin.repository";
 
 export const adminService = {
   //Service to Get all users

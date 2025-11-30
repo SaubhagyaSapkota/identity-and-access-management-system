@@ -1,4 +1,4 @@
-import { pool } from "../../../connections/postgres.connection";
+import { pool } from "../connections/postgres.connection";
 
 export const authRepository = {
   // Create a new user

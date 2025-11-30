@@ -1,6 +1,5 @@
 import { authRepository } from "../database/repositories/auth.repository";
 import bcrypt from "bcrypt";
-import { sendEmail } from "../shared/utils/sendGrid.email.utils";
 import { jwtTokenService } from "../shared/utils/jwtToken.utils";
 import { tokenRepository } from "../database/repositories/token.repository";
 import jwt from "jsonwebtoken";
