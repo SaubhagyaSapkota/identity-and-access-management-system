@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 import route from "./routes";
 import { connectDB } from "./database/connections/postgres.connection";
 import cookieParser from "cookie-parser";
-
+import path from "path";
 // Load environment variables
 dotenv.config();
 const app = express();
@@ -12,6 +12,9 @@ const PORT = 3000;
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+
+// Serve uploaded files statically
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // Routes
 app.use("/api/iam", route);
