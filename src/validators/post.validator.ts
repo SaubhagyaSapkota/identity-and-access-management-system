@@ -13,7 +13,7 @@ export const updatePostValidator = z.object({
     postId: z.string().min(1, "Post ID is required"),
   }),
   body: z.object({
-    mode: z.enum(["append", "replace"]).default("replace"),
+    mode: z.enum(["append", "replace"]).default("replace").optional(),
     title: z.string().min(1, "Title is required").optional(),
     issue_description: z.string().min(1, "Content is required").optional(),
     solution_description: z.string().min(1, "Content is required").optional(),
