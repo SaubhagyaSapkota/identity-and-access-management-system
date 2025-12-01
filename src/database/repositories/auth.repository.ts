@@ -6,20 +6,35 @@ export const authRepository = {
     name,
     email,
     password,
-    is_email_verified,
   }: {
     name: string;
     email: string;
     password: string;
-    is_email_verified?: boolean;
   }) {
     const result = await pool.query(
-      `INSERT INTO users (name, email, password, is_email_verified)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO users (name, email, password)
+       VALUES ($1, $2, $3)
        RETURNING *`,
-      [name, email, password, is_email_verified || false]
+      [name, email, password || false]
     );
     return result.rows[0];
+  },
+
+  // Get role ID for user
+  async getRoleIdByName(roleName: string) {
+    const result = await pool.query(`SELECT id FROM roles WHERE name = $1`, [
+      roleName,
+    ]);
+    return result.rows[0]?.id;
+  },
+
+  // Assign role to user
+  async assignRoleToUser(userId: number, roleId: number) {
+    await pool.query(
+      `INSERT INTO user_roles (user_id, role_id)
+     VALUES ($1, $2)`,
+      [userId, roleId]
+    );
   },
 
   // Find a user by email

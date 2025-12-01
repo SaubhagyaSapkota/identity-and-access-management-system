@@ -19,9 +19,11 @@ export const authService = {
       name,
       email,
       password: hashedPassword,
-      is_email_verified: false,
     });
 
+    const userRoleId = await authRepository.getRoleIdByName("user");
+    await authRepository.assignRoleToUser(user.id, userRoleId);
+    
     const token = await jwtTokenService.generateEmailVerificationToken(
       user.id,
       email
