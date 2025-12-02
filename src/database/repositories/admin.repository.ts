@@ -8,7 +8,7 @@ export const adminRepository = {
     limit = 10,
     offset = 0
   ) {
-    let query = "SELECT id, name, email, role FROM users";
+    let query = "SELECT id, name, email FROM users";
     const conditions: string[] = [];
     const params: any[] = [];
     let i = 1;
