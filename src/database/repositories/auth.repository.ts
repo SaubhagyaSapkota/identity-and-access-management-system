@@ -22,10 +22,15 @@ export const authRepository = {
 
   // Get role ID for user
   async getRoleIdByName(roleName: string) {
-    const result = await pool.query(`SELECT id FROM roles WHERE name = $1`, [
+    const result = await pool.query(`SELECT roleid FROM roles WHERE name = $1`, [
       roleName,
     ]);
-    return result.rows[0]?.id;
+
+    if (!result.rows[0]) {
+      throw new Error(`Role '${roleName}' not found`);
+    }
+    
+    return result.rows[0]?.roleid;
   },
 
   // Assign role to user

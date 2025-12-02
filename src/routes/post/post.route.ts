@@ -1,6 +1,6 @@
 import { postController } from "controller/post.controller";
-import { create } from "domain";
 import express from "express";
+import { checkPermission } from "middleware/checkPermission.middleware";
 import { uploadPostFiles } from "middleware/file-upload.middleware";
 import { validateRequest } from "middleware/validation.middleware";
 import {
@@ -20,6 +20,7 @@ const postRouter = express.Router();
 postRouter.post(
   "/",
   uploadPostFiles,
+  checkPermission("create_post"),
   validateRequest(createPostValidator),
   postController.createPost
 );
@@ -32,6 +33,7 @@ postRouter.post(
 postRouter.put(
   "/:postId",
   uploadPostFiles,
+  checkPermission("update_post"),
   validateRequest(updatePostValidator),
   postController.updatePost
 );
@@ -43,6 +45,7 @@ postRouter.put(
  */
 postRouter.delete(
   "/:postId",
+  checkPermission("delete_post"),
   validateRequest(deletePostValidator),
   postController.deletePost
 );
@@ -52,7 +55,7 @@ postRouter.delete(
  * @desc    View all post
  * @access  Users
  */
-postRouter.get("/", postController.getAllPost);
+postRouter.get("/", checkPermission("read_post"), postController.getAllPost);
 
 /**
  * @route   GET /api/iam/post/:id
@@ -62,6 +65,7 @@ postRouter.get("/", postController.getAllPost);
 postRouter.get(
   "/:postId",
   validateRequest(getPostByIdValidator),
+  checkPermission("read_post"),
   postController.getPostById
 );
 
