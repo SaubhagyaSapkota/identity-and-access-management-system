@@ -23,7 +23,7 @@ export const authService = {
 
     const userRoleId = await authRepository.getRoleIdByName("user");
     await authRepository.assignRoleToUser(user.id, userRoleId);
-    
+
     const token = await jwtTokenService.generateEmailVerificationToken(
       user.id,
       email
@@ -34,11 +34,8 @@ export const authService = {
 
     const verifyLink = `${process.env.CLIENT_URL}/verify-email?token=${token}`;
 
-    return await EmailManager.sendEmailVerificationEmail(
-      email,
-      name,
-      verifyLink
-    );
+    EmailManager.sendEmailVerificationEmail(email, name, verifyLink);
+    return user;
   },
 
   async loginUser(email: string, password: string) {

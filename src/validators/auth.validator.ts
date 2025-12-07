@@ -9,7 +9,6 @@ export const registerUserValidator = z.object({
       .max(50, "Email should not exceed 50 characters")
       .toLowerCase(),
     password: z.string().min(6, "Password must be at least 6 characters long"),
-    is_email_verified: z.boolean().optional(),
   }),
 });
 
