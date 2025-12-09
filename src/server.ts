@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import route from "./routes";
 import { connectDB } from "./database/connections/postgres.connection";
+import { connectRedis } from "./database/connections/redis.connection";
 import cookieParser from "cookie-parser";
 import path from "path";
 // Load environment variables
@@ -20,8 +21,22 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 app.use("/api/iam", route);
 
 // Connect to the database and then start the server
-connectDB().then(() => {
-  app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-  });
-});
+async function startServer() {
+  try {
+    // Connect PostgreSQL
+    await connectDB();
+
+    // Connect Redis
+    await connectRedis();
+
+    // Start server only after both connections succeed
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error("Startup failed:", error);
+    process.exit(1);
+  }
+}
+
+startServer();
