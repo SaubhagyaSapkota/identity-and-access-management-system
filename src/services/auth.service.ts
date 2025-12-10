@@ -1,7 +1,6 @@
 import { authRepository } from "../database/repositories/auth.repository";
 import bcrypt from "bcrypt";
 import { jwtTokenService } from "../shared/utils/jwtToken.utils";
-import { tokenRepository } from "../database/repositories/token.repository";
 import jwt from "jsonwebtoken";
 import { EmailManager } from "middleware/sendEmail.middleware";
 import { redisTokenService } from "shared/utils/redisTokenService";
@@ -225,10 +224,13 @@ export const authService = {
   },
 
   async refreshAccessToken(oldRefreshToken: string) {
-    const tokenExists = await tokenRepository.findRefreshToken(oldRefreshToken);
-    if (!tokenExists) {
-      throw new Error("Refresh token not found or invalid");
-    }
+    const isBlacklisted = await redisTokenService.isTokenBlacklisted(
+      oldRefreshToken
+    );
+    if (isBlacklisted) throw new Error("Token revoked, login again");
+
+    const tokenId = await redisTokenService.findRefreshToken(oldRefreshToken);
+    if (!tokenId) throw new Error("Refresh token invalid or expired");
 
     const decoded = jwt.verify(
       oldRefreshToken,
@@ -240,12 +242,12 @@ export const authService = {
     const newAccessToken = await jwtTokenService.signAccessToken(userId);
     const newRefreshToken = await jwtTokenService.signRefreshToken(userId);
 
-    await tokenRepository.deleteRefreshToken(oldRefreshToken);
+    await redisTokenService.deleteRefreshToken(oldRefreshToken);
 
-    await tokenRepository.saveRefreshToken(
+    await redisTokenService.saveRefreshToken(
       newRefreshToken,
-      userId,
-      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      String(userId),
+      7 * 24 * 3600
     );
 
     return { accessToken: newAccessToken, refreshToken: newRefreshToken };
