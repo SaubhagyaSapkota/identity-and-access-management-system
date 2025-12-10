@@ -41,7 +41,7 @@ authRouter.post(
  * @desc    Submit a logout request
  * @access  User
  */
-authRouter.post("/logout", authController.userLogout);
+authRouter.post("/logout", authenticateUser, authController.userLogout);
 
 /**
  * @route   POST /api/iam/auth/forget-password
