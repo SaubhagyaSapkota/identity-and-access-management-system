@@ -75,7 +75,18 @@ export const authService = {
   },
 
   async logoutUser(refreshToken: any) {
-    await tokenRepository.deleteRefreshToken(refreshToken);
+    await redisTokenService.deleteRefreshToken(refreshToken);
+
+    const decoded: any = jwt.verify(
+      refreshToken,
+      process.env.REFRESH_TOKEN_SECRET!
+    );
+    const expSeconds = decoded.exp - Math.floor(Date.now() / 1000);
+
+    await redisTokenService.blacklistToken(refreshToken, expSeconds);
+
+    // delete session
+    await redis.del(`session:${decoded.userId}`);
   },
 
   async forgetPassword(email: string) {
