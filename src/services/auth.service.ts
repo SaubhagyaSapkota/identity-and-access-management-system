@@ -4,6 +4,8 @@ import { jwtTokenService } from "../shared/utils/jwtToken.utils";
 import { tokenRepository } from "../database/repositories/token.repository";
 import jwt from "jsonwebtoken";
 import { EmailManager } from "middleware/sendEmail.middleware";
+import { redisTokenService } from "shared/utils/redisTokenService";
+import redis from "../database/connections/redis.connection";
 
 export const authService = {
   // service to register a user
@@ -53,20 +55,20 @@ export const authService = {
       throw new Error("Invalid password");
     }
 
-    const existingToken = await tokenRepository.findRefreshTokenByUserId(
-      user.id
-    );
-    if (existingToken) {
+    const existingSession = await redis.get(`session:${user.id}`);
+    if (existingSession) {
       throw new Error("User already logged in");
     }
 
     const accessToken = await jwtTokenService.signAccessToken(user.id);
     const refreshToken = await jwtTokenService.signRefreshToken(user.id);
 
-    await tokenRepository.saveRefreshToken(
+    await redis.set(`session:${user.id}`, refreshToken, "EX", 7 * 24 * 3600);
+
+    await redisTokenService.saveRefreshToken(
       refreshToken,
-      user.id,
-      new Date(Date.now() + 7 * 86400000)
+      String(user.id),
+      7 * 24 * 3600
     );
 
     return { accessToken, refreshToken };

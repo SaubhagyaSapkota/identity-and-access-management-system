@@ -20,7 +20,7 @@ app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 // Routes
 app.use("/api/iam", route);
 
-// Connect to the database and then start the server
+// Connect to the database and redis and then start the server
 async function startServer() {
   try {
     // Connect PostgreSQL
