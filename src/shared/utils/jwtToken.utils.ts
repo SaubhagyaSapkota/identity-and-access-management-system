@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import {v4 as uuidv4} from "uuid";
 
 dotenv.config();
 
@@ -32,13 +33,33 @@ export const jwtTokenService = {
   },
 
   async signAccessToken(userId: number) {
-    return jwt.sign({ userId }, process.env.JWT_SECRET!, { expiresIn: "15m" });
+    const jti = uuidv4();
+    return {
+      token: jwt.sign({ userId, jti }, process.env.JWT_SECRET!, {
+        expiresIn: "15m",
+      }),
+      jti,
+    };
   },
 
   async signRefreshToken(userId: number) {
-    return jwt.sign({ userId }, process.env.REFRESH_TOKEN_SECRET!, {
-      expiresIn: "7d",
-    });
+    const jti = uuidv4();
+    return {
+      token: jwt.sign(
+        { userId, jti, type: "refresh" },
+        process.env.REFRESH_TOKEN_SECRET!,
+        { expiresIn: "7d" }
+      ),
+      jti,
+    };
+  },
+
+  verifyAccessToken(token: string) {
+    return jwt.verify(token, process.env.JWT_SECRET!);
+  },
+
+  verifyRefreshToken(token: string) {
+    return jwt.verify(token, process.env.REFRESH_TOKEN_SECRET!);
   },
 
   async generateForgetPasswordToken(userId: string, email: string) {

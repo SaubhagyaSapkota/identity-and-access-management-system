@@ -27,9 +27,14 @@ export const authController = {
   userLogin: asyncHandler(
     async (req: Request<{}, {}, UserLoginInput["body"], {}>, res: Response) => {
       const { email, password } = req.body;
+      const userAgent = req.headers["user-agent"] || "Unknown User Agent";
+      const ipAddress =
+        req.ip || req.socket.remoteAddress || "Unknown IP Address";
       const { accessToken, refreshToken } = await authService.loginUser(
         email,
-        password
+        password,
+        userAgent,
+        ipAddress
       );
 
       // Store refresh token in HttpOnly cookie
@@ -49,13 +54,15 @@ export const authController = {
 
   // controller to logout a user
   userLogout: asyncHandler(async (req: Request, res: Response) => {
+    const accessToken = req.user?.accessToken as any;
+
     const refreshToken = req.cookies.refreshToken;
 
     if (!refreshToken) {
       throw new Error("User already logged out");
     }
 
-    await authService.logoutUser(refreshToken);
+    await authService.logoutUser(accessToken, refreshToken);
 
     // Clear cookie
     res.clearCookie("refreshToken", {
@@ -181,7 +188,7 @@ export const authController = {
     });
 
     res.status(200).json({
-      accessToken,
+      accessToken, message: "Token refreshed successfully."
     });
   }),
 };
