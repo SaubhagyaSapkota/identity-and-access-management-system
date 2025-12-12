@@ -1,42 +1,3 @@
-// import jwt from "jsonwebtoken";
-// import { Request, Response, NextFunction } from "express";
-
-// export const authenticateUser = (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction
-// ) => {
-//   const authHeader = req.headers.authorization;
-
-//   if (!authHeader) {
-//     return res.status(401).json({ message: "Access token missing" });
-//   }
-
-//   const accessToken = authHeader.split(" ")[1];
-
-//   if (!accessToken) {
-//     return res.status(401).json({ message: "Access token missing" });
-//   }
-
-//   try {
-//     const decoded = jwt.verify(
-//       accessToken,
-//       process.env.JWT_SECRET!
-//     ) as jwt.JwtPayload;
-
-//     req.user = {
-//       userId: decoded.userId,
-//       email: decoded.email,
-//       token: accessToken,
-//     };
-
-//     next();
-//   } catch (error) {
-//     return res.status(403).json({ message: "Invalid or expired access token" });
-//   }
-// };
-
-
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import redis from "../database/connections/redis.connection";
@@ -81,7 +42,7 @@ export const authenticateUser = async (
       });
     }
 
-    // 3. Check Redis cache (fast path)
+    // 3. Check Redis cache
     const cachedSession = await redis.get(`session:${userId}:${jti}`);
 
     if (cachedSession) {
@@ -96,7 +57,7 @@ export const authenticateUser = async (
       return next();
     }
 
-    // 4. Check database (slow path - cache miss)
+    // 4. Check database
     const session = await sessionRepository.findSessionByJti(jti);
 
     if (!session) {

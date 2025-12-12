@@ -113,27 +113,4 @@ export const sessionRepository = {
     ]);
     return result.rows[0];
   },
-
-  // findSessionByRefreshToken: async (token: string) => {
-  //   const query = `
-  //     SELECT * FROM sessions
-  //     WHERE refresh_token = $1
-  //     LIMIT 1;
-  //   `;
-
-  //   const result = await pool.query(query, [token]);
-  //   return result.rows[0];
-  // },
-
-  // revokeSession: async (sessionId: string) => {
-  //   const query = `
-  //     UPDATE sessions
-  //     SET revoked = TRUE
-  //     WHERE id = $1
-  //     RETURNING *;
-  //   `;
-
-  //   const result = await pool.query(query, [sessionId]);
-  //   return result.rows[0];
-  // },
 };

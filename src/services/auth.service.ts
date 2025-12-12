@@ -47,7 +47,7 @@ export const authService = {
     userAgent: string,
     ipAddress: string
   ) {
-    // 1. Find and validate user
+    // Find and validate user
     const user = await authRepository.findUserByEmail(email);
     if (!user) {
       throw new Error("Invalid credentials");
@@ -57,22 +57,22 @@ export const authService = {
       throw new Error("Please verify your email before logging in");
     }
 
-    // 2. Verify password
+    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new Error("Invalid credentials");
     }
 
-    // 3. Generate tokens with JTI
+    // Generate tokens with JTI
     const { token: accessToken, jti: accessJti } =
       await jwtTokenService.signAccessToken(user.id);
     const { token: refreshToken, jti: refreshJti } =
       await jwtTokenService.signRefreshToken(user.id);
 
-    // 4. Hash refresh token for database
+    // Hash refresh token for database
     const refreshTokenHash = sessionRepository.hashToken(refreshToken);
 
-    // 5. Create session in database
+    // Create session in database
     const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
     await sessionRepository.createSession({
       user_id: user.id,
@@ -83,7 +83,7 @@ export const authService = {
       expires_at: expiresAt,
     });
 
-    // 6. Cache session in Redis (fast lookup)
+    // Cache session in Redis (fast lookup)
     const sessionData = {
       userId: user.id,
       email: user.email,
@@ -92,75 +92,67 @@ export const authService = {
       createdAt: new Date().toISOString(),
     };
 
-    await redis.setex(
-      `session:${user.id}:${accessJti}`,
-      15 * 60, // 15 minutes
-      JSON.stringify(sessionData)
+    await redisTokenService.saveUserSession(
+      user.id,
+      accessJti,
+      sessionData,
+      15 * 60
     );
 
-    // 7. Track active session
-    await redis.sadd(`user:${user.id}:sessions`, accessJti);
+    await redisTokenService.addActiveSession(user.id, accessJti);
 
-    // 8. Store refresh token mapping (for token refresh flow)
-    await redis.setex(`refresh:${refreshJti}`, 7 * 24 * 3600, accessJti);
+    await redisTokenService.saveRefreshToken(
+      refreshJti,
+      accessJti,
+      7 * 24 * 3600
+    );
 
     return { accessToken, refreshToken };
   },
 
   async logoutUser(accessToken: string, refreshToken: string) {
-    try {
-      // 1. Verify and decode tokens
-      const accessDecoded: any = jwtTokenService.verifyAccessToken(accessToken);
-      const refreshDecoded: any =
-        jwtTokenService.verifyRefreshToken(refreshToken);
+    // Verify and decode tokens
+    const accessDecoded: any = jwtTokenService.verifyAccessToken(accessToken);
+    const refreshDecoded: any =
+      jwtTokenService.verifyRefreshToken(refreshToken);
 
-      const { userId, jti: accessJti } = accessDecoded;
-      const { jti: refreshJti } = refreshDecoded;
+    const { userId, jti: accessJti } = accessDecoded;
+    const { jti: refreshJti } = refreshDecoded;
 
-      // 2. Revoke session in database (audit trail)
-      await sessionRepository.revokeSessionByJti(accessJti);
+    // Revoke session in database
+    await sessionRepository.revokeSessionByJti(accessJti);
 
-      // 3. Delete session from Redis
-      await redis.del(`session:${userId}:${accessJti}`);
-      await redis.srem(`user:${userId}:sessions`, accessJti);
+    // Delete session from Redis using service methods
+    await redisTokenService.deleteUserSession(userId, accessJti);
+    await redisTokenService.removeActiveSession(userId, accessJti);
+    await redisTokenService.deleteRefreshToken(refreshJti);
 
-      // 4. Delete refresh token mapping
-      await redis.del(`refresh:${refreshJti}`);
+    // Blacklist tokens (for remaining lifetime)
+    const accessExpSeconds = accessDecoded.exp - Math.floor(Date.now() / 1000);
+    const refreshExpSeconds =
+      refreshDecoded.exp - Math.floor(Date.now() / 1000);
 
-      // 5. Blacklist tokens (for remaining lifetime)
-      const accessExpSeconds =
-        accessDecoded.exp - Math.floor(Date.now() / 1000);
-      const refreshExpSeconds =
-        refreshDecoded.exp - Math.floor(Date.now() / 1000);
-
-      if (accessExpSeconds > 0) {
-        await redis.setex(`blacklist:${accessJti}`, accessExpSeconds, "1");
-      }
-      if (refreshExpSeconds > 0) {
-        await redis.setex(`blacklist:${refreshJti}`, refreshExpSeconds, "1");
-      }
-    } catch (error) {
-      console.error("Logout error:", error);
-      throw new Error("Logout failed");
-    }
+    // Blacklist tokens using service methods
+    await redisTokenService.blacklistAccessToken(accessJti, accessExpSeconds);
+    await redisTokenService.blacklistRefreshToken(
+      refreshJti,
+      refreshExpSeconds
+    );
   },
 
   async logoutAllDevices(userId: number) {
-    // 1. Revoke all sessions in database
+    // Revoke all sessions in database
     await sessionRepository.revokeAllUserSessions(userId);
 
-    // 2. Delete all Redis sessions
-    const jtis = await redis.smembers(`user:${userId}:sessions`);
+    // Get all active sessions from Redis
+    const jtis = await redisTokenService.getAllUserSessions(userId.toString());
 
-    for (const jti of jtis) {
-      await redis.del(`session:${userId}:${jti}`);
+    // Delete all sessions and blacklist tokens
+    await redisTokenService.deleteAllUserSessions(userId.toString(), jtis);
+    await redisTokenService.blacklistMultipleTokens(jtis, 15 * 60);
 
-      // Blacklist (get expiry from session data if needed)
-      await redis.setex(`blacklist:${jti}`, 15 * 60, "1");
-    }
-
-    // 3. Clear session tracking
-    await redis.del(`user:${userId}:sessions`);
+    // Clear session tracking
+    await redisTokenService.clearUserSessionTracking(userId.toString());
   },
 
   async forgetPassword(email: string) {
@@ -299,7 +291,7 @@ export const authService = {
   },
 
   async refreshAccessToken(oldRefreshToken: string) {
-    // 1. Verify and decode old refresh token
+    // Verify and decode old refresh token
     const decoded = jwt.verify(
       oldRefreshToken,
       process.env.REFRESH_TOKEN_SECRET!
@@ -316,8 +308,10 @@ export const authService = {
 
     const { userId, jti: oldRefreshJti, exp } = decoded;
 
-    // 2. Check if old refresh token is blacklisted
-    const isBlacklisted = await redis.get(`blacklist:${oldRefreshJti}`);
+    // Check if old refresh token is blacklisted
+    const isBlacklisted = await redisTokenService.isTokenBlacklisted(
+      oldRefreshJti
+    );
     if (isBlacklisted) {
       // CRITICAL: Token reuse detected! Possible theft.
       console.error(`[SECURITY] Token reuse detected for user ${userId}`);
@@ -330,10 +324,10 @@ export const authService = {
       );
     }
 
-    // 3. Hash the old refresh token to find session in database
+    // Hash the old refresh token to find session in database
     const oldRefreshTokenHash = sessionRepository.hashToken(oldRefreshToken);
 
-    // 4. Find session in database (source of truth)
+    // Find session in database
     const session = await sessionRepository.findSessionByRefreshTokenHash(
       oldRefreshTokenHash
     );
@@ -342,22 +336,22 @@ export const authService = {
       throw new Error("Session not found or expired");
     }
 
-    // 5. Verify user ID matches
+    // Verify user ID matches
     if (session.user_id !== userId) {
       throw new Error("Token user mismatch");
     }
 
-    // 6. Generate NEW tokens with NEW JTIs
+    // Generate NEW tokens with NEW JTIs
     const { token: newAccessToken, jti: newAccessJti } =
       await jwtTokenService.signAccessToken(userId);
     const { token: newRefreshToken, jti: newRefreshJti } =
       await jwtTokenService.signRefreshToken(userId);
 
-    // 7. Hash new refresh token for database
+    // Hash new refresh token for database
     const newRefreshTokenHash = sessionRepository.hashToken(newRefreshToken);
     const newExpiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-    // 8. Update session in database with new tokens
+    // Update session in database with new tokens
     await sessionRepository.updateSessionTokens(
       session.id,
       newAccessJti,
@@ -365,11 +359,8 @@ export const authService = {
       newExpiresAt
     );
 
-    // 9. Update Redis cache
-    // Delete old access token session
+    // Get old access JTI from session
     const oldAccessJti = session.access_token_jti;
-    await redis.del(`session:${userId}:${oldAccessJti}`);
-    await redis.srem(`user:${userId}:sessions`, oldAccessJti);
 
     // Create new access token session
     const sessionData = {
@@ -379,34 +370,24 @@ export const authService = {
       createdAt: new Date().toISOString(),
     };
 
-    await redis.setex(
-      `session:${userId}:${newAccessJti}`,
-      15 * 60, // 15 minutes
-      JSON.stringify(sessionData)
+    // Update Redis cache using service method
+    await redisTokenService.updateSessionTokens(
+      userId.toString(),
+      oldAccessJti,
+      newAccessJti,
+      oldRefreshJti,
+      newRefreshJti,
+      sessionData
     );
 
-    await redis.sadd(`user:${userId}:sessions`, newAccessJti);
-
-    // 10. Update refresh token mapping
-    await redis.del(`refresh:${oldRefreshJti}`);
-    await redis.setex(`refresh:${newRefreshJti}`, 7 * 24 * 3600, newAccessJti);
-
-    // 11. CRITICAL: Blacklist old refresh token
+    // Calculate old refresh token remaining lifetime
     const oldRefreshExpSeconds = exp - Math.floor(Date.now() / 1000);
-    if (oldRefreshExpSeconds > 0) {
-      await redis.setex(
-        `blacklist:${oldRefreshJti}`,
-        oldRefreshExpSeconds,
-        "1"
-      );
-    }
 
-    // 12. Optionally blacklist old access token too
-    // Use a reasonable TTL for access token (15 minutes)
-    await redis.setex(
-      `blacklist:${oldAccessJti}`,
-      15 * 60, // 15 minutes
-      "1"
+    // Blacklist old tokens using service method
+    await redisTokenService.blacklistOldTokensAfterRefresh(
+      oldAccessJti,
+      oldRefreshJti,
+      oldRefreshExpSeconds
     );
 
     return {
