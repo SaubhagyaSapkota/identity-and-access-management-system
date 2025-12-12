@@ -1,7 +1,8 @@
 import { Request, Response, NextFunction } from "express";
 import { roleRepository } from "../database/repositories/role.repository";
+import { Permission } from "config/default.permission.config";
 
-export function checkPermission(requiredPermission: string) {
+export function checkPermission(requiredPermission: Permission) {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const userId = req.user?.userId;

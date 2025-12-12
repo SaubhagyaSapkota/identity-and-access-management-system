@@ -1,3 +1,4 @@
+import { PERMISSIONS } from "config/default.permission.config";
 import { postController } from "controller/post.controller";
 import express from "express";
 import { checkPermission } from "middleware/checkPermission.middleware";
@@ -20,7 +21,7 @@ const postRouter = express.Router();
 postRouter.post(
   "/",
   uploadPostFiles,
-  checkPermission("create_post"),
+  checkPermission(PERMISSIONS.CREATE_POST),
   validateRequest(createPostValidator),
   postController.createPost
 );
@@ -33,7 +34,7 @@ postRouter.post(
 postRouter.put(
   "/:postId",
   uploadPostFiles,
-  checkPermission("update_post"),
+  checkPermission(PERMISSIONS.UPDATE_POST),
   validateRequest(updatePostValidator),
   postController.updatePost
 );
@@ -45,7 +46,7 @@ postRouter.put(
  */
 postRouter.delete(
   "/:postId",
-  checkPermission("delete_post"),
+  checkPermission(PERMISSIONS.DELETE_POST),
   validateRequest(deletePostValidator),
   postController.deletePost
 );
@@ -55,7 +56,7 @@ postRouter.delete(
  * @desc    View all post
  * @access  Users
  */
-postRouter.get("/", checkPermission("read_post"), postController.getAllPost);
+postRouter.get("/", checkPermission(PERMISSIONS.READ_POST), postController.getAllPost);
 
 /**
  * @route   GET /api/iam/post/:id
@@ -65,7 +66,7 @@ postRouter.get("/", checkPermission("read_post"), postController.getAllPost);
 postRouter.get(
   "/:postId",
   validateRequest(getPostByIdValidator),
-  checkPermission("read_post"),
+  checkPermission(PERMISSIONS.READ_POST),
   postController.getPostById
 );
 
