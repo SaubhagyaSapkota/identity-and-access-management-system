@@ -39,6 +39,7 @@
 - Session Tracking
 - Token Mapping
 - Token Blacklisting
+- Rate limiting for login attempts
 
 ### Post Management (CURD)
 
