@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import { adminService } from "../services/admin.service";
-import { asyncHandler } from "../shared/utils/async.handler";
+import { adminService } from "../../services/admin/admin.service";
+import { asyncHandler } from "../../shared/utils/async.handler";
 
 export const adminController = {
   // controller to get all user

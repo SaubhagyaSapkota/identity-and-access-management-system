@@ -1,6 +1,6 @@
-import { Request, Response, NextFunction } from "express";
-import { authService } from "../services/auth.service";
-import { asyncHandler } from "../shared/utils/async.handler";
+import { Request, Response } from "express";
+import { authService } from "../../services/auth/auth.service";
+import { asyncHandler } from "../../shared/utils/async.handler";
 import {
   ChangePasswordInput,
   ForgetPasswordInput,
@@ -9,7 +9,7 @@ import {
   ResetPasswordInput,
   UserLoginInput,
   VerifyEmailInput,
-} from "../validators/auth.validator";
+} from "../../validators/auth/auth.validator";
 
 export const authController = {
   // controller to register a user

@@ -1,5 +1,5 @@
 import { PERMISSIONS } from "config/default.permission.config";
-import { postController } from "controller/post.controller";
+import { postController } from "controller/post/post.controller";
 import express from "express";
 import { checkPermission } from "middleware/checkPermission.middleware";
 import { uploadPostFiles } from "middleware/file-upload.middleware";
@@ -9,7 +9,7 @@ import {
   deletePostValidator,
   getPostByIdValidator,
   updatePostValidator,
-} from "validators/post.validator";
+} from "validators/post/post.validator";
 
 const postRouter = express.Router();
 
@@ -56,7 +56,11 @@ postRouter.delete(
  * @desc    View all post
  * @access  Users
  */
-postRouter.get("/", checkPermission(PERMISSIONS.READ_POST), postController.getAllPost);
+postRouter.get(
+  "/",
+  checkPermission(PERMISSIONS.READ_POST),
+  postController.getAllPost
+);
 
 /**
  * @route   GET /api/iam/post/:id

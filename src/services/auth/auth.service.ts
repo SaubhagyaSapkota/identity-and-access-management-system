@@ -1,12 +1,11 @@
-import { authRepository } from "../database/repositories/auth.repository";
+import { authRepository } from "../../database/repositories/auth.repository";
 import bcrypt from "bcrypt";
-import { jwtTokenService } from "../shared/utils/jwtToken.utils";
-import jwt from "jsonwebtoken";
+import { jwtTokenService } from "../../shared/utils/jwtToken.utils";
 import { EmailManager } from "middleware/sendEmail.middleware";
 import { redisTokenService } from "shared/utils/redisTokenService";
-import redis from "../database/connections/redis.connection";
 import { sessionRepository } from "database/repositories/session.repository";
-import crypto from "crypto";
+import { loginAttemptService } from "./loginAttempt.service";
+import { format } from "date-fns";
 
 export const authService = {
   // service to register a user
@@ -47,21 +46,44 @@ export const authService = {
     userAgent: string,
     ipAddress: string
   ) {
+    const identifier = email.toLowerCase();
+    const isBlocked = await loginAttemptService.isBlocked(identifier);
+    if (isBlocked) {
+      const ttlSeconds = await loginAttemptService.getBlockTTL(identifier);
+      const blockedUntil = format(
+        new Date(Date.now() + ttlSeconds * 1000),
+        "yyyy-MM-dd HH:mm:ss"
+      );
+      throw new Error(
+        `Your account is temporarily blocked due to too many failed login attempts. Please try again after ${blockedUntil}.`
+      );
+    }
+
     // Find and validate user
     const user = await authRepository.findUserByEmail(email);
     if (!user) {
       throw new Error("Invalid credentials");
     }
 
-    if (!user.is_email_verified) {
-      throw new Error("Please verify your email before logging in");
-    }
-
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
-      throw new Error("Invalid credentials");
+      // Increment failed attempts in Redis
+      await loginAttemptService.incrementFailedAttempts(identifier);
+      const remainingAttempts = await loginAttemptService.getRemainingAttempts(
+        identifier
+      );
+      throw new Error(
+        `Invalid credentials. You have ${remainingAttempts} attempts left before your account is blocked.`
+      );
     }
+
+    if (!user.is_email_verified) {
+      throw new Error("Please verify your email before logging in");
+    }
+    
+    // On successful login, reset the failed attempts counter
+    await loginAttemptService.resetAttempts(identifier);
 
     // Generate tokens with JTI
     const { token: accessToken, jti: accessJti } =
@@ -292,10 +314,7 @@ export const authService = {
 
   async refreshAccessToken(oldRefreshToken: string) {
     // Verify and decode old refresh token
-    const decoded = jwt.verify(
-      oldRefreshToken,
-      process.env.REFRESH_TOKEN_SECRET!
-    ) as jwt.JwtPayload;
+    const decoded: any = jwtTokenService.verifyRefreshToken(oldRefreshToken);
 
     // Validate required fields
     if (!decoded.exp || !decoded.userId || !decoded.jti) {

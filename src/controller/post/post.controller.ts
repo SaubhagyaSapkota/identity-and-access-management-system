@@ -1,12 +1,12 @@
 import { Request, Response } from "express";
-import { asyncHandler } from "../shared/utils/async.handler";
-import { postService } from "../services/post.service";
+import { asyncHandler } from "../../shared/utils/async.handler";
+import { postService } from "../../services/post/post.service";
 import {
   CreatePostInput,
   DeletePostInput,
   GetPostByIdInput,
   UpdatePostInput,
-} from "validators/post.validator";
+} from "validators/post/post.validator";
 import { UploadedFile } from "middleware/file-upload.middleware";
 
 export const postController = {

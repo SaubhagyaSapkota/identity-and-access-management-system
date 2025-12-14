@@ -1,5 +1,5 @@
 import express from "express";
-import { authController } from "../../controller/auth.controller";
+import { authController } from "../../controller/auth/auth.controller";
 import {
   changePasswordSchema,
   forgetPasswordSchema,
@@ -8,7 +8,7 @@ import {
   resetPasswordSchema,
   userLoginSchema,
   verifyEmailSchema,
-} from "../../validators/auth.validator";
+} from "../../validators/auth/auth.validator";
 import { validateRequest } from "../../middleware/validation.middleware";
 import { authenticateUser } from "../../middleware/authUser.middleware";
 

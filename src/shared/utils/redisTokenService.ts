@@ -6,6 +6,13 @@ const REFRESH_TOKEN_PREFIX = "refresh_token:";
 const BLACKLIST_PREFIX = "blacklist:";
 
 export const redisTokenService = {
+  /**
+   * For login
+   * @param userId
+   * @param accessJti
+   * @param sessionData
+   * @param expiresInSec
+   */
   // Save session data with access token JTI
   async saveUserSession(
     userId: string,
@@ -35,6 +42,11 @@ export const redisTokenService = {
     );
   },
 
+  /**
+   * For logout
+   * @param userId
+   * @param accessJti
+   */
   // Delete user session from Redis
   async deleteUserSession(userId: string, accessJti: string) {
     const sessionKey = `${SESSION_PREFIX}${userId}:${accessJti}`;
@@ -71,6 +83,11 @@ export const redisTokenService = {
     return result !== null;
   },
 
+  /**
+   * For logging out from all devices.
+   * @param userId
+   * @returns
+   */
   // Get all active sessions for a user
   async getAllUserSessions(userId: string): Promise<string[]> {
     return await redis.smembers(`${USER_SESSIONS_PREFIX}${userId}`);
@@ -102,6 +119,15 @@ export const redisTokenService = {
     return await redis.get(`${REFRESH_TOKEN_PREFIX}${refreshJti}`);
   },
 
+  /**
+   * Used in Refresh access token
+   * @param userId
+   * @param oldAccessJti
+   * @param newAccessJti
+   * @param oldRefreshJti
+   * @param newRefreshJti
+   * @param sessionData
+   */
   // Update session with new tokens (used during refresh)
   async updateSessionTokens(
     userId: string,
@@ -135,6 +161,9 @@ export const redisTokenService = {
     await this.blacklistRefreshToken(oldRefreshJti, refreshExpSeconds);
   },
 
+  /**
+   * For extra works
+   */
   // Get session data
   async getSessionData(userId: string, accessJti: string): Promise<any | null> {
     const sessionKey = `${SESSION_PREFIX}${userId}:${accessJti}`;

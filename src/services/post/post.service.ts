@@ -1,5 +1,8 @@
-import { CreatePostInput, UpdatePostInput } from "validators/post.validator";
-import { postRepository } from "../database/repositories/post.repository";
+import {
+  CreatePostInput,
+  UpdatePostInput,
+} from "validators/post/post.validator";
+import { postRepository } from "../../database/repositories/post.repository";
 import { UploadedFile } from "middleware/file-upload.middleware";
 
 export const postService = {
