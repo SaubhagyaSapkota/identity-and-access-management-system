@@ -5,6 +5,9 @@ import { connectDB } from "./database/connections/postgres.connection";
 import { connectRedis } from "./database/connections/redis.connection";
 import cookieParser from "cookie-parser";
 import path from "path";
+import { morganMiddleware } from "logger/morgan";
+import { errorHandler } from "middleware/errorHandler.middleware";
+
 // Load environment variables
 dotenv.config();
 const app = express();
@@ -13,6 +16,7 @@ const PORT = 3000;
 // Middleware
 app.use(express.json());
 app.use(cookieParser());
+app.use(morganMiddleware);
 
 // Serve uploaded files statically
 app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
@@ -40,3 +44,5 @@ async function startServer() {
 }
 
 startServer();
+
+app.use(errorHandler);
